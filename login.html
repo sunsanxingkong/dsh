@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>登录 · DeepSeek Harness</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #171a21; --border: #2a2f3a;
+    --text: #e6e8ee; --muted: #9aa3b2; --brand: #4d7cfe; --brand-hover: #5f8bff;
+    --danger: #ff5c6c; --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(1200px 600px at 50% -10%, #1a2030 0%, var(--bg) 55%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--text); padding: 24px;
+  }
+  .card {
+    width: 100%; max-width: 380px; background: var(--card);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 32px 28px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .logo-mark { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--brand), #7c5cff); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+  h1 { font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+  .sub { color: var(--muted); font-size: 13px; margin: 4px 0 24px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+  input {
+    width: 100%; height: 40px; background: #10131a; border: 1px solid var(--border);
+    border-radius: 9px; color: var(--text); padding: 0 12px; font-size: 14px; outline: none;
+  }
+  input:focus { border-color: var(--brand); }
+  .btn {
+    width: 100%; height: 42px; margin-top: 22px; border: 0; border-radius: 9px;
+    background: var(--brand); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn:hover { background: var(--brand-hover); }
+  .btn:disabled { opacity: .6; cursor: not-allowed; }
+  .err { display: none; margin-top: 14px; padding: 10px 12px; background: rgba(255,92,108,.12); border: 1px solid rgba(255,92,108,.35); color: var(--danger); border-radius: 8px; font-size: 13px; }
+  .switch { text-align: center; margin-top: 18px; font-size: 13px; color: var(--muted); }
+  .switch a { color: var(--brand); cursor: pointer; text-decoration: none; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo"><div class="logo-mark">D</div><h1>DeepSeek Harness</h1></div>
+    <div class="sub" id="sub">登录以继续</div>
+    <form id="form" autocomplete="off">
+      <label for="username">用户名</label>
+      <input id="username" name="username" required autofocus />
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" required />
+      <button class="btn" id="submit" type="submit">登录</button>
+    </form>
+    <div class="err" id="err"></div>
+    <div class="switch">还没有账号？<a id="toggle">注册</a> · <a href="/change-password.html">修改密码</a></div>
+    <div class="hint" id="hint">默认管理员：admin / admin123（首次登录后请尽快修改）</div>
+  </div>
+
+<script>
+  const form = document.getElementById('form');
+  const submit = document.getElementById('submit');
+  const err = document.getElementById('err');
+  const toggle = document.getElementById('toggle');
+  const sub = document.getElementById('sub');
+  const hint = document.getElementById('hint');
+  let mode = 'login';
+
+  toggle.addEventListener('click', () => {
+    mode = mode === 'login' ? 'register' : 'login';
+    submit.textContent = mode === 'login' ? '登录' : '注册';
+    toggle.textContent = mode === 'login' ? '注册' : '登录';
+    sub.textContent = mode === 'login' ? '登录以继续' : '创建新账号';
+    hint.textContent = mode === 'login' ? '默认管理员：admin / admin123（首次登录后请尽快修改）' : '注册即可创建独立空间（聊天记录、密钥、工作区互不共享）';
+    err.style.display = 'none';
+  });
+
+  function showErr(msg) { err.textContent = msg; err.style.display = 'block'; }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    submit.disabled = true;
+    try {
+      const r = await fetch('/api/auth.' + mode, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          type: 'client-request',
+          rpcId: crypto.randomUUID(),
+          method: 'auth.' + mode,
+          payload: { username, password }
+        })
+      });
+      const res = await r.json();
+      if (res.result && res.result.ok) {
+        location.href = '/';
+      } else {
+        showErr((res.result && res.result.error && res.result.error.message) || '操作失败');
+      }
+    } catch (err2) {
+      showErr('网络错误：' + err2.message);
+    } finally {
+      submit.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
