@@ -1,6 +1,6 @@
 # dsh-multiuser
 
-让 [DeepSeek Harness (dsh)](https://github.com/deepseek-ai/deepseek-harness) 支持多用户的轻量二次开发方案。
+让 [DeepSeek Harness (dsh)](https://github.com/sunsanxingkong/deepseek-harness) 支持多用户的轻量二次开发方案。
 
 dsh 本身是单租户、无认证的 agent harness。本项目通过「认证门户 + 每用户独立 dsh 进程」实现多用户隔离：
 
